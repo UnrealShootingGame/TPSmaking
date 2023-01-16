@@ -14,7 +14,7 @@
 // 깃허브 Merge시 Conflict감지용 주석. 발견하면 제발 지워주세요!!
 UParkourMovementComponent::UParkourMovementComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	//PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UParkourMovementComponent::BeginPlay()
@@ -1035,5 +1035,3 @@ void UParkourMovementComponent::SlideEnd(bool bCrouch)
 		}
 	}
 }
-
-
