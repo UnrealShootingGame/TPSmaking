@@ -11,6 +11,7 @@
 #include "UE5Coop/Character/ShooterCharacter.h"
 #include "DrawDebugHelpers.h"
 
+// 깃허브 Merge시 Conflict감지용 주석. 발견하면 제발 지워주세요!!
 UParkourMovementComponent::UParkourMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
