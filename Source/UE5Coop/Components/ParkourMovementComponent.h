@@ -44,6 +44,7 @@ protected:
 	void CloseGates();
 	void EndEvents();
 	void CheckQueues();
+	bool StaminaIsNotZero();
 
 	// Wall Run
 	void WallRun();
@@ -115,6 +116,7 @@ protected:
 	bool CanSlide();
 	FVector GetSlideVector();
 	void SlideJump();
+	bool ShouldSlideEnd();
 	void SlideEnd(bool bCrouch = false);
 
 private:

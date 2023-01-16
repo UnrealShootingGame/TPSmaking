@@ -20,6 +20,7 @@ class UInputAction;
 class UAnimMontage;
 class UCombatComponent;
 class UParkourMovementComponent;
+class UStatComponent;
 class AWeapon;
 
 UCLASS()
@@ -128,6 +129,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UParkourMovementComponent* ParkourMovement;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UStatComponent* Stat;
+
 	bool bJumpButtonClicked = false;
 
 	EPlayerStatus PlayerStatus = EPlayerStatus::EPS_Walking;
@@ -155,6 +159,7 @@ private:
 	float AO_Pitch;
 	FRotator StartingAimRotation;
 
+	UPROPERTY(VisibleAnywhere)
 	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 
 	UPROPERTY(VisibleAnywhere)
@@ -176,4 +181,5 @@ public:
 	bool IsWeaponEquipped();
 	AWeapon* GetEquippedWeapon();
 	FVector GetHitTarget() const;
+	float GetCurrentStamina() const;
 };

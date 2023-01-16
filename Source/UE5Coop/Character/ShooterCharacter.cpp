@@ -5,6 +5,7 @@
 #include "Components/CapsuleComponent.h"
 #include "UE5Coop/Components/CombatComponent.h"
 #include "UE5Coop/Components/ParkourMovementComponent.h"
+#include "UE5Coop/Components/StatComponent.h"
 #include "UE5Coop/Weapons/Weapon.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetMaterialLibrary.h"
@@ -25,6 +26,7 @@ AShooterCharacter::AShooterCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	ParkourMovement = CreateDefaultSubobject<UParkourMovementComponent>(TEXT("ParkourMovement"));
+	Stat = CreateDefaultSubobject<UStatComponent>(TEXT("Stat"));
 }
 
 void AShooterCharacter::PostInitializeComponents()
@@ -33,6 +35,7 @@ void AShooterCharacter::PostInitializeComponents()
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	Combat->SetShooterCharacter(this);
+	Stat->SetShooterCharacter(this);
 }
 
 void AShooterCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
@@ -47,7 +50,7 @@ void AShooterCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, ui
 void AShooterCharacter::Landed(const FHitResult& Hit)
 {
 	Super::OnLanded(Hit);
-	//ParkourMovement->LandEvent();
+	ParkourMovement->LandEvent();
 }
 
 void AShooterCharacter::BeginPlay()
@@ -153,11 +156,6 @@ void AShooterCharacter::SetMaterialParamters()
 	float DistanceCharacterToCamera = FVector::Distance(GetActorLocation(), FollowCamera->GetComponentLocation());
 	float Opacity = UKismetMathLibrary::MapRangeClamped(DistanceCharacterToCamera, 70.f, 130.f, 0.f, 1.f);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(1, -1, FColor::Blue, FString::Printf(TEXT("Distance : %f"), DistanceCharacterToCamera));
-	}
-
 	for (auto Material : MaterialInstanceDynamics)
 	{
 		Material->SetScalarParameterValue(TEXT("Opacity"), Opacity);
@@ -172,6 +170,7 @@ void AShooterCharacter::SetMaterialParamters()
 
 void AShooterCharacter::TurnInPlace(float DeltaTime)
 {
+	if (ParkourMovement->CurrentParkourMovementMode != EParkourMovementType::EPM_None && ParkourMovement->CurrentParkourMovementMode != EParkourMovementType::EPM_Crouch) return;
 	if (AO_Yaw > 90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Right;
@@ -344,6 +343,10 @@ void AShooterCharacter::EquipAbilityWeaponButtonPressed()
 void AShooterCharacter::FireButtonPressedOrReleased(const FInputActionValue& Value)
 {
 	const bool bFireButtonPressed = Value.Get<bool>();
+	if (bFireButtonPressed && ParkourMovement->CurrentParkourMovementMode == EParkourMovementType::EPM_Sprint)
+	{
+		ParkourMovement->SetParkourMovementMode(EParkourMovementType::EPM_None);
+	}
 	if (Combat)
 	{
 		Combat->FireButtonPressed(bFireButtonPressed);
@@ -429,6 +432,12 @@ FVector AShooterCharacter::GetHitTarget() const
 {
 	if (Combat == nullptr) return FVector();
 	return Combat->HitTarget;
+}
+
+float AShooterCharacter::GetCurrentStamina() const
+{
+	if (Stat == nullptr) return -1.f;
+	return Stat->CurrentStamina;
 }
 
 

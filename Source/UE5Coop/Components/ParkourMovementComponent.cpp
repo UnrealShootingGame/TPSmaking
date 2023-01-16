@@ -39,7 +39,6 @@ void UParkourMovementComponent::Initialize(ACharacter* InitCharacter)
 	DefaultCrouchSpeed = CharacterMovement->MaxWalkSpeedCrouched;
 	DefaultCapsuleHalfHeight = Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	DefaultUseControllerRotationYaw = Character->bUseControllerRotationYaw;
-	GetWorld()->GetTimerManager().SetTimer(UpdateTimer, this, &UParkourMovementComponent::ParkourMovementUpdate, UpdateDelay, true);
 }
 
 void UParkourMovementComponent::ParkourMovementUpdate()
@@ -55,6 +54,7 @@ void UParkourMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	ParkourMovementUpdate();
 	InterpCapsuleHalfHeight(DeltaTime);
 }
 
@@ -240,6 +240,12 @@ void UParkourMovementComponent::CheckQueues()
 
 }
 
+bool UParkourMovementComponent::StaminaIsNotZero()
+{
+	if (ShooterCharacter == nullptr) return false;
+	return ShooterCharacter->GetCurrentStamina() > 0.f;
+}
+
 void UParkourMovementComponent::WallRun()
 {
 	if (!WallRunGate.IsOpen()) return;
@@ -333,7 +339,10 @@ void UParkourMovementComponent::CorrectWallRunPosition()
 
 bool UParkourMovementComponent::CanWallRun()
 {
-	return (CurrentParkourMovementMode == EParkourMovementType::EPM_None || IsWallRunning()) && ForwardInput() > 0.f;
+	return (CurrentParkourMovementMode == EParkourMovementType::EPM_None || 
+		IsWallRunning() || 
+		ShooterCharacter->GetAO_Yaw() < 89.f || 
+		ShooterCharacter->GetAO_Yaw() > -89.f) && ForwardInput() > 0.f;
 }
 
 bool UParkourMovementComponent::IsWallRunning()
@@ -520,6 +529,7 @@ bool UParkourMovementComponent::CanVerticalWallRun()
 		CurrentParkourMovementMode == EParkourMovementType::EPM_VerticalWallRun ||
 		IsWallRunning()) &&
 		ForwardInput() > 0.f &&
+		StaminaIsNotZero() &&
 		CharacterMovement->IsFalling();
 }
 
@@ -768,6 +778,10 @@ void UParkourMovementComponent::MantleCheck()
 	{
 		MantleStart();
 	}
+	else if (CurrentParkourMovementMode == EParkourMovementType::EPM_LedgeGrab && !StaminaIsNotZero())
+	{
+		VerticalWallRunEnd(0.36f);
+	}
 }
 
 void UParkourMovementComponent::MantleStart()
@@ -840,7 +854,7 @@ void UParkourMovementComponent::CloseSprintGate()
 
 void UParkourMovementComponent::SprintUpdate()
 {
-	if (CurrentParkourMovementMode == EParkourMovementType::EPM_Sprint && !(ForwardInput() > 0.f))
+	if (CurrentParkourMovementMode == EParkourMovementType::EPM_Sprint && !(ForwardInput() > 0.f) || !StaminaIsNotZero())
 	{
 		SprintEnd();
 	}
@@ -951,7 +965,7 @@ void UParkourMovementComponent::Slide()
 
 void UParkourMovementComponent::SlideUpdate()
 {
-	if (CurrentParkourMovementMode == EParkourMovementType::EPM_Slide && CharacterMovement->Velocity.Length() <= 35.f)
+	if (ShouldSlideEnd())
 	{
 		SlideEnd(true);
 	}
@@ -1021,6 +1035,13 @@ void UParkourMovementComponent::SlideJump()
 	{
 		SlideEnd();
 	}
+}
+
+bool UParkourMovementComponent::ShouldSlideEnd()
+{
+	return (CurrentParkourMovementMode == EParkourMovementType::EPM_Slide && CharacterMovement->Velocity.Length() <= 35.f) ||
+		ShooterCharacter->GetAO_Yaw() > 89.f ||
+		ShooterCharacter->GetAO_Yaw() < -89.f;
 }
 
 void UParkourMovementComponent::SlideEnd(bool bCrouch)
